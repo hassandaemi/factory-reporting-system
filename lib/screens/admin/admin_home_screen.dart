@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../login_screen.dart';
 import 'inspector_management_screen.dart';
+import 'form_management_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -67,11 +68,16 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 ),
                 _buildActionCard(
                   context,
-                  'Create Form',
-                  Icons.create,
+                  'Manage Forms',
+                  Icons.description,
                   Colors.green,
                   () {
-                    // Navigate to create form screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FormManagementScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildActionCard(
@@ -125,7 +131,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               title: const Text('Manage Forms'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to forms management screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FormManagementScreen(),
+                  ),
+                );
               },
             ),
             ListTile(

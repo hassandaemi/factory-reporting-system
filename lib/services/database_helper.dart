@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import '../models/form.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -124,6 +125,28 @@ class DatabaseHelper {
   Future<int> insertFormField(Map<String, dynamic> formField) async {
     final db = await database;
     return await db.insert('FormFields', formField);
+  }
+
+  // Helper method to insert a form with its fields in a transaction
+  Future<void> insertFormWithFields(
+      FormModel form, List<FormField> fields) async {
+    final db = await database;
+
+    await db.transaction((txn) async {
+      // Insert the form and get its ID
+      final formMap = form.toMap();
+      final formId = await txn.insert('Forms', formMap);
+
+      // Insert each field with the form ID
+      for (int i = 0; i < fields.length; i++) {
+        final field = fields[i];
+        final fieldMap = field.toMap();
+        fieldMap['form_id'] = formId;
+        fieldMap['field_order'] = i; // Set order based on list index
+
+        await txn.insert('FormFields', fieldMap);
+      }
+    });
   }
 
   // Helper method to insert a report
