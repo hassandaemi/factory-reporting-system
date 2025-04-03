@@ -4,15 +4,29 @@ import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'services/database_helper.dart';
 import 'screens/login_screen.dart';
+import 'models/user.dart';
+import 'screens/admin/admin_home_screen.dart';
+import 'screens/inspector/inspector_home_screen.dart';
 
 // App state provider
 class AppState extends ChangeNotifier {
   final DatabaseHelper _databaseHelper = DatabaseHelper();
+  User? currentUser;
 
   // Get database helper instance
   DatabaseHelper get databaseHelper => _databaseHelper;
 
-  // Add more state management here as needed
+  // Login user
+  void loginUser(User user) {
+    currentUser = user;
+    notifyListeners();
+  }
+
+  // Logout user
+  void logoutUser() {
+    currentUser = null;
+    notifyListeners();
+  }
 }
 
 void main() async {
@@ -49,95 +63,16 @@ class MainApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const LoginScreen(),
-    );
-  }
-}
-
-class HomePage extends StatelessWidget {
-  const HomePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Factory Reporting System'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Text(
-              'Welcome to Factory Reporting System',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Phase 1: Project Setup & Database Foundation',
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Factory Reporting System',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.dashboard),
-              title: const Text('Dashboard'),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.description),
-              title: const Text('Forms'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to forms screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.report),
-              title: const Text('Reports'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to reports screen
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.people),
-              title: const Text('Users'),
-              onTap: () {
-                Navigator.pop(context);
-                // Navigate to users screen
-              },
-            ),
-          ],
-        ),
+      home: Consumer<AppState>(
+        builder: (context, appState, _) {
+          if (appState.currentUser == null) {
+            return const LoginScreen();
+          } else if (appState.currentUser!.role == UserRole.admin) {
+            return const AdminHomeScreen();
+          } else {
+            return const InspectorHomeScreen();
+          }
+        },
       ),
     );
   }

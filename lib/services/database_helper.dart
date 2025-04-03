@@ -144,6 +144,19 @@ class DatabaseHelper {
     return await db.insert('FormAssignments', assignment);
   }
 
+  // Get user by username
+  Future<Map<String, dynamic>?> getUserByUsername(String username) async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'Users',
+      where: 'username = ?',
+      whereArgs: [username],
+      limit: 1,
+    );
+
+    return results.isNotEmpty ? results.first : null;
+  }
+
   // Get all users
   Future<List<Map<String, dynamic>>> getUsers() async {
     final db = await database;

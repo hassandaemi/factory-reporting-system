@@ -33,31 +33,30 @@ class _LoginScreenState extends State<LoginScreen> {
         final appState = Provider.of<AppState>(context, listen: false);
         final dbHelper = appState.databaseHelper;
 
-        // Get users with matching username
-        final users = await dbHelper.getUsers();
-        final user = users.firstWhere(
-          (u) => u['username'] == _usernameController.text,
-          orElse: () => <String, dynamic>{},
-        );
+        // Get user with matching username
+        final userMap =
+            await dbHelper.getUserByUsername(_usernameController.text);
 
-        if (user.isEmpty) {
+        if (userMap == null) {
           _showErrorDialog('User not found');
           return;
         }
 
         // Verify password
-        final userModel = User.fromMap(user);
+        final userModel = User.fromMap(userMap);
         if (!userModel.verifyPassword(_passwordController.text)) {
           _showErrorDialog('Invalid password');
           return;
         }
 
-        // Navigate to home screen
+        // Store user in AppState
+        appState.loginUser(userModel);
+
+        // Navigate based on user role
         if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
+
+        // LoginScreen will automatically be replaced by the appropriate screen
+        // due to the Consumer in MainApp, so no need to manually navigate
       } catch (e) {
         _showErrorDialog('Error: $e');
       } finally {
