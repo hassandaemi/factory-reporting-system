@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../login_screen.dart';
+import 'inspector_management_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -31,10 +32,69 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           ),
         ],
       ),
-      body: const Center(
-        child: Text(
-          'Admin Dashboard',
-          style: TextStyle(fontSize: 24),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Admin Dashboard',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Quick Actions',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 16.0,
+              runSpacing: 16.0,
+              children: [
+                _buildActionCard(
+                  context,
+                  'Manage Inspectors',
+                  Icons.people,
+                  Colors.blue,
+                  () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const InspectorManagementScreen(),
+                      ),
+                    );
+                  },
+                ),
+                _buildActionCard(
+                  context,
+                  'Create Form',
+                  Icons.create,
+                  Colors.green,
+                  () {
+                    // Navigate to create form screen
+                  },
+                ),
+                _buildActionCard(
+                  context,
+                  'Assign Forms',
+                  Icons.assignment,
+                  Colors.orange,
+                  () {
+                    // Navigate to form assignment screen
+                  },
+                ),
+                _buildActionCard(
+                  context,
+                  'View Reports',
+                  Icons.bar_chart,
+                  Colors.purple,
+                  () {
+                    // Navigate to reports screen
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ),
       drawer: Drawer(
@@ -70,10 +130,15 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.people),
-              title: const Text('Manage Users'),
+              title: const Text('Manage Inspectors'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to user management screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const InspectorManagementScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -91,6 +156,48 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                 Navigator.pop(context);
                 // Navigate to reports and analytics screen
               },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard(BuildContext context, String title, IconData icon,
+      Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 160,
+        height: 120,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 40,
+              color: color,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

@@ -157,6 +157,16 @@ class DatabaseHelper {
     return results.isNotEmpty ? results.first : null;
   }
 
+  // Get all inspectors
+  Future<List<Map<String, dynamic>>> getInspectors() async {
+    final db = await database;
+    return await db.query(
+      'Users',
+      where: 'role = ?',
+      whereArgs: ['inspector'],
+    );
+  }
+
   // Get all users
   Future<List<Map<String, dynamic>>> getUsers() async {
     final db = await database;
