@@ -323,13 +323,7 @@ class _CreateEditFormScreenState extends State<CreateEditFormScreen> {
                                 child: ListTile(
                                   title: Text(field.label),
                                   subtitle: Text(
-                                    '${field.type.toString().split('.').last} · ' +
-                                        (field.isRequired
-                                            ? 'Required'
-                                            : 'Optional') +
-                                        (field.options != null
-                                            ? ' · Options: ${field.options!.join(', ')}'
-                                            : ''),
+                                    '${field.type.toString().split('.').last} · ${field.isRequired ? 'Required' : 'Optional'}${field.options != null ? ' · Options: ${field.options!.join(', ')}' : ''}',
                                   ),
                                   trailing: IconButton(
                                     icon: const Icon(Icons.delete),

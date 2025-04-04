@@ -68,7 +68,7 @@ class _InspectorManagementScreenState extends State<InspectorManagementScreen> {
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Add New Inspector'),
         content: Form(
           key: formKey,
@@ -111,7 +111,7 @@ class _InspectorManagementScreenState extends State<InspectorManagementScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Cancel'),
           ),
           TextButton(
@@ -123,9 +123,13 @@ class _InspectorManagementScreenState extends State<InspectorManagementScreen> {
                 // Check if username already exists
                 final existingUser =
                     await dbHelper.getUserByUsername(usernameController.text);
+                if (!mounted) return;
+
+                // Check if dialog context is still valid
+                if (!dialogContext.mounted) return;
+
                 if (existingUser != null) {
-                  if (!mounted) return;
-                  Navigator.of(ctx).pop();
+                  Navigator.of(dialogContext).pop();
                   _showErrorSnackBar('Username already exists');
                   return;
                 }
@@ -139,12 +143,15 @@ class _InspectorManagementScreenState extends State<InspectorManagementScreen> {
 
                 // Insert into database
                 await dbHelper.insertUser(newInspector.toMap());
-
                 if (!mounted) return;
-                Navigator.of(ctx).pop();
+
+                // Check if dialog context is still valid
+                if (!dialogContext.mounted) return;
+                Navigator.of(dialogContext).pop();
 
                 // Refresh the list
                 await _fetchInspectors();
+                if (!mounted) return;
 
                 _showSuccessSnackBar('Inspector added successfully');
               }

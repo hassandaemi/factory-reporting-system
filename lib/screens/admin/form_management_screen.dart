@@ -196,8 +196,7 @@ class _FormManagementScreenState extends State<FormManagementScreen> {
                             dense: true,
                             title: Text(field.label),
                             subtitle: Text(
-                              '${field.type.toString().split('.').last} · ' +
-                                  (field.isRequired ? 'Required' : 'Optional'),
+                              '${field.type.toString().split('.').last} · ${field.isRequired ? 'Required' : 'Optional'}',
                             ),
                             trailing:
                                 field.type == form_models.FieldType.dropdown

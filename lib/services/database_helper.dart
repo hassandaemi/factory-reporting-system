@@ -161,6 +161,137 @@ class DatabaseHelper {
     return await db.insert('ReportData', reportData);
   }
 
+  // Helper method to save a complete report with all form data
+  Future<int> saveReport(
+      int formId, int inspectorId, Map<int, dynamic> formData) async {
+    final db = await database;
+    int reportId = 0;
+
+    await db.transaction((txn) async {
+      // Insert the report and get its ID
+      reportId = await txn.insert('Reports', {
+        'form_id': formId,
+        'inspector_user_id': inspectorId,
+        'created_at': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      });
+
+      // Insert each field's data
+      for (final entry in formData.entries) {
+        final fieldId = entry.key;
+        final value = entry.value;
+
+        await txn.insert('ReportData', {
+          'report_id': reportId,
+          'form_field_id': fieldId,
+          'value': value.toString(),
+        });
+      }
+    });
+
+    return reportId;
+  }
+
+  // Delete a report and its data
+  Future<int> deleteReport(int reportId) async {
+    final db = await database;
+    // Since we have ON DELETE CASCADE, we just need to delete the report
+    return await db.delete(
+      'Reports',
+      where: 'id = ?',
+      whereArgs: [reportId],
+    );
+  }
+
+  // Get reports for a specific inspector
+  Future<List<Map<String, dynamic>>> getReportsForInspector(
+      int inspectorId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT R.id, R.form_id, R.created_at, F.name as formName
+      FROM Reports R
+      JOIN Forms F ON R.form_id = F.id
+      WHERE R.inspector_user_id = ?
+      ORDER BY R.created_at DESC
+    ''', [inspectorId]);
+  }
+
+  // Get all reports (admin view)
+  Future<List<Map<String, dynamic>>> getAllReports() async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT R.id, R.form_id, R.created_at, F.name as formName, U.username as inspectorName
+      FROM Reports R
+      JOIN Forms F ON R.form_id = F.id
+      JOIN Users U ON R.inspector_user_id = U.id
+      ORDER BY R.created_at DESC
+    ''');
+  }
+
+  // Get report details with field labels
+  Future<List<Map<String, dynamic>>> getReportDataWithFieldLabels(
+      int reportId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT FF.label, RD.value
+      FROM ReportData RD
+      JOIN FormFields FF ON RD.form_field_id = FF.id
+      WHERE RD.report_id = ?
+      ORDER BY FF.field_order ASC
+    ''', [reportId]);
+  }
+
+  // Get filtered reports for export
+  Future<List<Map<String, dynamic>>> getFilteredReports(int formId,
+      {DateTime? startDate, DateTime? endDate}) async {
+    final db = await database;
+    String query = '''
+      SELECT R.id, R.created_at, U.username as inspectorName
+      FROM Reports R
+      JOIN Users U ON R.inspector_user_id = U.id
+      WHERE R.form_id = ?
+    ''';
+
+    List<dynamic> args = [formId];
+
+    if (startDate != null) {
+      query += ' AND R.created_at >= ?';
+      args.add(startDate.toIso8601String());
+    }
+
+    if (endDate != null) {
+      // Add one day to include the full end date
+      final adjustedEndDate =
+          DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+      query += ' AND R.created_at <= ?';
+      args.add(adjustedEndDate.toIso8601String());
+    }
+
+    query += ' ORDER BY R.created_at ASC';
+
+    return await db.rawQuery(query, args);
+  }
+
+  // Get report data map for export
+  Future<Map<int, String>> getReportDataMap(int reportId) async {
+    final db = await database;
+    final results = await db.query(
+      'ReportData',
+      columns: ['form_field_id', 'value'],
+      where: 'report_id = ?',
+      whereArgs: [reportId],
+    );
+
+    final Map<int, String> dataMap = {};
+    for (var row in results) {
+      final fieldId = row['form_field_id'] as int;
+      final value = row['value'] as String? ?? '';
+      dataMap[fieldId] = value;
+    }
+
+    return dataMap;
+  }
+
   // Helper method to insert a form assignment
   Future<int> insertFormAssignment(Map<String, dynamic> assignment) async {
     final db = await database;
@@ -171,6 +302,18 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getFormAssignments() async {
     final db = await database;
     return await db.query('FormAssignments');
+  }
+
+  // Get assigned forms for a specific inspector
+  Future<List<Map<String, dynamic>>> getAssignedFormsForInspector(
+      int inspectorId) async {
+    final db = await database;
+    return await db.rawQuery('''
+      SELECT F.*
+      FROM Forms F
+      JOIN FormAssignments FA ON F.id = FA.form_id
+      WHERE FA.inspector_user_id = ?
+    ''', [inspectorId]);
   }
 
   // Add a form assignment

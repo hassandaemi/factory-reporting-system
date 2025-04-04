@@ -5,6 +5,7 @@ import '../login_screen.dart';
 import 'inspector_management_screen.dart';
 import 'form_management_screen.dart';
 import 'form_assignment_screen.dart';
+import 'admin_reports_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -101,7 +102,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   Icons.bar_chart,
                   Colors.purple,
                   () {
-                    // Navigate to reports screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminReportsScreen(),
+                      ),
+                    );
                   },
                 ),
               ],
@@ -176,7 +182,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               title: const Text('Reports & Analytics'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to reports and analytics screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminReportsScreen(),
+                  ),
+                );
               },
             ),
           ],
@@ -197,7 +208,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
+              color: Colors.grey.withValues(
+                  red: 128, green: 128, blue: 128, alpha: 77), // 0.3 * 255 ≈ 77
               spreadRadius: 1,
               blurRadius: 5,
               offset: const Offset(0, 3),
