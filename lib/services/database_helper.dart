@@ -167,6 +167,35 @@ class DatabaseHelper {
     return await db.insert('FormAssignments', assignment);
   }
 
+  // Get all form assignments
+  Future<List<Map<String, dynamic>>> getFormAssignments() async {
+    final db = await database;
+    return await db.query('FormAssignments');
+  }
+
+  // Add a form assignment
+  Future<int> addFormAssignment(int formId, int inspectorId) async {
+    final db = await database;
+    return await db.insert(
+      'FormAssignments',
+      {
+        'form_id': formId,
+        'inspector_user_id': inspectorId,
+      },
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  // Remove a form assignment
+  Future<int> removeFormAssignment(int formId, int inspectorId) async {
+    final db = await database;
+    return await db.delete(
+      'FormAssignments',
+      where: 'form_id = ? AND inspector_user_id = ?',
+      whereArgs: [formId, inspectorId],
+    );
+  }
+
   // Get user by username
   Future<Map<String, dynamic>?> getUserByUsername(String username) async {
     final db = await database;

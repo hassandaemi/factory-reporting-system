@@ -4,6 +4,7 @@ import '../../main.dart';
 import '../login_screen.dart';
 import 'inspector_management_screen.dart';
 import 'form_management_screen.dart';
+import 'form_assignment_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -86,7 +87,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   Icons.assignment,
                   Colors.orange,
                   () {
-                    // Navigate to form assignment screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FormAssignmentScreen(),
+                      ),
+                    );
                   },
                 ),
                 _buildActionCard(
@@ -157,7 +163,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               title: const Text('Form Assignments'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigate to form assignments screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const FormAssignmentScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
