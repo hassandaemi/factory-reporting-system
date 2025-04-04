@@ -53,6 +53,67 @@ class _FormManagementScreenState extends State<FormManagementScreen> {
     );
   }
 
+  void _showSuccessSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  // Show confirmation dialog before deleting a form
+  void _showDeleteConfirmationDialog(form_models.FormModel form) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Form'),
+        content: Text(
+          'Are you sure you want to delete "${form.name}"?\n\n'
+          'All associated fields, assignments, and reports will also be deleted.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () async {
+              try {
+                final dbHelper = Provider.of<AppState>(context, listen: false)
+                    .databaseHelper;
+
+                // Delete the form
+                await dbHelper.deleteForm(form.id!);
+                if (!mounted) return;
+
+                // Close the dialog
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+
+                // Refresh the form list
+                await _fetchForms();
+                if (!mounted) return;
+
+                _showSuccessSnackBar('Form deleted successfully');
+              } catch (e) {
+                // Close the dialog
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+
+                _showErrorSnackBar('Failed to delete form: $e');
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,11 +176,52 @@ class _FormManagementScreenState extends State<FormManagementScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.info_outline),
-                                  onPressed: () {
-                                    // View form details in future phase
-                                  },
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit),
+                                      onPressed: () async {
+                                        final dbHelper = Provider.of<AppState>(
+                                                context,
+                                                listen: false)
+                                            .databaseHelper;
+                                        if (form.id != null) {
+                                          final fieldMaps = await dbHelper
+                                              .getFormFields(form.id!);
+                                          final fields = fieldMaps
+                                              .map((map) =>
+                                                  form_models.FormField.fromMap(
+                                                      map))
+                                              .toList();
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  CreateEditFormScreen(
+                                                editForm: form,
+                                                initialFields: fields,
+                                              ),
+                                            ),
+                                          ).then((_) => _fetchForms());
+                                        }
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.info_outline),
+                                      onPressed: () {
+                                        // View form details in future phase
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      tooltip: 'Delete Form',
+                                      onPressed: () =>
+                                          _showDeleteConfirmationDialog(form),
+                                    ),
+                                  ],
                                 ),
                                 onTap: () async {
                                   // View form details and fields

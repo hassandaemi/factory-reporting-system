@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../main.dart';
 import 'inspector_forms_screen.dart';
 import 'inspector_reports_screen.dart';
+import '../login_screen.dart';
 
 class InspectorHomeScreen extends StatelessWidget {
   const InspectorHomeScreen({super.key});
@@ -21,7 +22,11 @@ class InspectorHomeScreen extends StatelessWidget {
             icon: const Icon(Icons.logout),
             onPressed: () {
               Provider.of<AppState>(context, listen: false).logoutUser();
-              Navigator.pushReplacementNamed(context, '/login');
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
             },
           ),
         ],

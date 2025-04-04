@@ -86,15 +86,23 @@ class _CreateEditFormScreenState extends State<CreateEditFormScreen> {
         final dbHelper =
             Provider.of<AppState>(context, listen: false).databaseHelper;
 
-        // Save the form with its fields
-        await dbHelper.insertFormWithFields(form, _fields);
+        // Check if we're editing an existing form or creating a new one
+        if (widget.editForm != null) {
+          // Update existing form with its fields
+          await dbHelper.updateFormWithFields(form, _fields);
+        } else {
+          // Save the new form with its fields
+          await dbHelper.insertFormWithFields(form, _fields);
+        }
 
         setState(() {
           _isLoading = false;
         });
 
         if (!mounted) return;
-        _showSuccessSnackBar('Form saved successfully');
+        _showSuccessSnackBar(widget.editForm != null
+            ? 'Form updated successfully'
+            : 'Form saved successfully');
         Navigator.pop(context);
       } catch (e) {
         setState(() {

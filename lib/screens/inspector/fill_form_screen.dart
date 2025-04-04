@@ -119,6 +119,13 @@ class _FillFormScreenState extends State<FillFormScreen> {
           throw Exception('User ID is null');
         }
 
+        // Get DatabaseHelper instance from AppState
+        final databaseHelper =
+            Provider.of<AppState>(context, listen: false).databaseHelper;
+
+        // Save the report to the database
+        await databaseHelper.saveReport(widget.formId, inspectorId, _formData);
+
         setState(() {
           _isSubmitting = false;
         });

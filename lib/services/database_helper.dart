@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/form.dart';
+import 'package:crypto/crypto.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -393,5 +395,120 @@ class DatabaseHelper {
     final db = await database;
     return await db
         .query('ReportData', where: 'report_id = ?', whereArgs: [reportId]);
+  }
+
+  // Helper method to update a form with its fields in a transaction
+  Future<void> updateFormWithFields(
+      FormModel form, List<FormField> updatedFields) async {
+    final db = await database;
+
+    await db.transaction((txn) async {
+      // Update the form
+      if (form.id != null) {
+        final formMap = form.toMap();
+        // Remove the id from the map as we don't want to update that
+        formMap.remove('id');
+        // Add updated timestamp
+        formMap['created_at'] = DateTime.now().toIso8601String();
+
+        await txn.update(
+          'Forms',
+          formMap,
+          where: 'id = ?',
+          whereArgs: [form.id],
+        );
+
+        // Get current fields from DB
+        final currentFieldMaps = await txn.query(
+          'FormFields',
+          where: 'form_id = ?',
+          whereArgs: [form.id],
+        );
+
+        final currentFieldIds =
+            currentFieldMaps.map<int>((map) => map['id'] as int).toSet();
+
+        // Track new fields (no ID) or updated fields (with ID)
+        final updatedFieldIds = <int>{};
+
+        // Process each updated field
+        for (int i = 0; i < updatedFields.length; i++) {
+          final field = updatedFields[i];
+
+          if (field.id != null && currentFieldIds.contains(field.id)) {
+            // Update existing field
+            final fieldMap = field.toMap();
+            // Remove the id from the map as we don't want to update that
+            fieldMap.remove('id');
+            fieldMap['form_id'] = form.id;
+            fieldMap['field_order'] = i;
+
+            await txn.update(
+              'FormFields',
+              fieldMap,
+              where: 'id = ?',
+              whereArgs: [field.id],
+            );
+
+            updatedFieldIds.add(field.id!);
+          } else {
+            // Insert new field
+            final fieldMap = field.toMap();
+            fieldMap['form_id'] = form.id;
+            fieldMap['field_order'] = i;
+
+            await txn.insert('FormFields', fieldMap);
+          }
+        }
+
+        // Delete fields that are no longer in the updated list
+        for (final currentId in currentFieldIds) {
+          if (!updatedFieldIds.contains(currentId)) {
+            await txn.delete(
+              'FormFields',
+              where: 'id = ?',
+              whereArgs: [currentId],
+            );
+          }
+        }
+      }
+    });
+  }
+
+  // Delete a user by ID
+  Future<int> deleteUser(int userId) async {
+    final db = await database;
+    return await db.delete(
+      'Users',
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // Update user password
+  Future<int> updateUserPassword(int userId, String newPassword) async {
+    final db = await database;
+
+    // Hash the password using the same method as in the User model
+    final bytes = utf8.encode(newPassword);
+    final digest = sha256.convert(bytes);
+    final hashedPassword = digest.toString();
+
+    return await db.update(
+      'Users',
+      {'password_hash': hashedPassword},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // Delete a form by ID
+  Future<int> deleteForm(int formId) async {
+    final db = await database;
+    return await db.delete(
+      'Forms',
+      where: 'id = ?',
+      whereArgs: [formId],
+    );
   }
 }

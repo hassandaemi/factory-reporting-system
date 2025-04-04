@@ -163,6 +163,132 @@ class _InspectorManagementScreenState extends State<InspectorManagementScreen> {
     );
   }
 
+  // Show confirmation dialog before deleting an inspector
+  void _showDeleteConfirmationDialog(User inspector) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Delete Inspector'),
+        content: Text(
+          'Are you sure you want to delete ${inspector.username}?\n\n'
+          'This will also delete all their form assignments. Reports created by this inspector will remain in the system.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () async {
+              final dbHelper =
+                  Provider.of<AppState>(context, listen: false).databaseHelper;
+
+              // Delete the inspector
+              await dbHelper.deleteUser(inspector.id!);
+              if (!mounted) return;
+
+              // Close the dialog
+              if (dialogContext.mounted) {
+                Navigator.of(dialogContext).pop();
+              }
+
+              // Refresh the inspector list
+              await _fetchInspectors();
+              if (!mounted) return;
+
+              _showSuccessSnackBar('Inspector deleted successfully');
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Show dialog to edit an inspector's password
+  void _showEditPasswordDialog(User inspector) {
+    final formKey = GlobalKey<FormState>();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text('Update Password for ${inspector.username}'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: newPasswordController,
+                decoration: const InputDecoration(
+                  labelText: 'New Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a new password';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: confirmPasswordController,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm New Password',
+                  border: OutlineInputBorder(),
+                ),
+                obscureText: true,
+                validator: (value) {
+                  if (value != newPasswordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final dbHelper = Provider.of<AppState>(context, listen: false)
+                    .databaseHelper;
+
+                // Update the password
+                await dbHelper.updateUserPassword(
+                  inspector.id!,
+                  newPasswordController.text,
+                );
+                if (!mounted) return;
+
+                // Close the dialog
+                if (dialogContext.mounted) {
+                  Navigator.of(dialogContext).pop();
+                }
+
+                _showSuccessSnackBar('Password updated successfully');
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -225,12 +351,25 @@ class _InspectorManagementScreenState extends State<InspectorManagementScreen> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 subtitle: Text('Inspector ID: ${inspector.id}'),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.info_outline),
-                                  onPressed: () {
-                                    // Show inspector details or edit screen
-                                    // This could be implemented in a future phase
-                                  },
+                                trailing: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.edit,
+                                          color: Colors.blue),
+                                      tooltip: 'Edit Password',
+                                      onPressed: () =>
+                                          _showEditPasswordDialog(inspector),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete,
+                                          color: Colors.red),
+                                      tooltip: 'Delete Inspector',
+                                      onPressed: () =>
+                                          _showDeleteConfirmationDialog(
+                                              inspector),
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
