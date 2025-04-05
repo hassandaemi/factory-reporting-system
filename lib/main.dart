@@ -19,12 +19,19 @@ class AppState extends ChangeNotifier {
   // Login user
   void loginUser(User user) {
     currentUser = user;
-    notifyListeners();
+
+    // Force Flutter to rebuild with the new user state
+    // Adding a slight delay ensures the UI has time to process the state change
+    Future.delayed(Duration.zero, () {
+      notifyListeners();
+    });
   }
 
   // Logout user
   void logoutUser() {
     currentUser = null;
+    // Refresh database connection on logout to ensure fresh state on next login
+    _databaseHelper.refreshDatabaseConnection().then((_) {});
     notifyListeners();
   }
 }
@@ -41,8 +48,10 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  // Initialize database
-  await DatabaseHelper().initDb();
+  // Initialize database and ensure a fresh connection
+  final dbHelper = DatabaseHelper();
+  await dbHelper.initDb();
+  await dbHelper.refreshDatabaseConnection();
 
   runApp(
     ChangeNotifierProvider(

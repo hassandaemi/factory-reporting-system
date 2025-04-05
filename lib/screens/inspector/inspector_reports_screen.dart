@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../models/user.dart';
 import '../../services/database_helper.dart';
 import '../shared/report_detail_screen.dart';
+import 'edit_report_screen.dart';
 
 class InspectorReportsScreen extends StatefulWidget {
   final User user;
@@ -61,6 +62,24 @@ class _InspectorReportsScreenState extends State<InspectorReportsScreen> {
           SnackBar(content: Text('Error loading reports: ${e.toString()}')),
         );
       }
+    }
+  }
+
+  void _navigateToEditReport(Map<String, dynamic> report) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditReportScreen(
+          reportId: report['id'],
+          formId: report['form_id'],
+          formName: report['formName'] ?? 'Unnamed Form',
+        ),
+      ),
+    );
+
+    // Refresh the list if data was updated
+    if (result == true) {
+      _loadReports();
     }
   }
 
@@ -128,7 +147,19 @@ class _InspectorReportsScreenState extends State<InspectorReportsScreen> {
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                              tooltip: 'Edit Report',
+                              onPressed: () {
+                                _navigateToEditReport(report);
+                              },
+                            ),
+                            const Icon(Icons.arrow_forward_ios, size: 16),
+                          ],
+                        ),
                         onTap: () {
                           Navigator.push(
                             context,

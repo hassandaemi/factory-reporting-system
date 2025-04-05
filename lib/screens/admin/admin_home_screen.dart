@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../main.dart';
-import '../login_screen.dart';
 import 'inspector_management_screen.dart';
 import 'form_management_screen.dart';
 import 'form_assignment_screen.dart';
@@ -24,13 +23,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Logout user and navigate to login screen
               Provider.of<AppState>(context, listen: false).logoutUser();
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
             },
           ),
         ],

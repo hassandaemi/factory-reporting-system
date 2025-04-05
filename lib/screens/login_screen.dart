@@ -33,9 +33,13 @@ class _LoginScreenState extends State<LoginScreen> {
         final appState = Provider.of<AppState>(context, listen: false);
         final dbHelper = appState.databaseHelper;
 
+        final username = _usernameController.text;
+        final password = _passwordController.text;
+
+        await dbHelper.refreshDatabaseConnection();
+
         // Get user with matching username
-        final userMap =
-            await dbHelper.getUserByUsername(_usernameController.text);
+        final userMap = await dbHelper.getUserByUsername(username);
 
         if (userMap == null) {
           _showErrorDialog('User not found');
@@ -44,7 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Verify password
         final userModel = User.fromMap(userMap);
-        if (!userModel.verifyPassword(_passwordController.text)) {
+        final isPasswordCorrect = userModel.verifyPassword(password);
+
+        if (!isPasswordCorrect) {
           _showErrorDialog('Invalid password');
           return;
         }

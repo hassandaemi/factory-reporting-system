@@ -23,6 +23,16 @@ class DatabaseHelper {
     return _database!;
   }
 
+  // Force database refresh by closing and reopening
+  Future<Database> refreshDatabaseConnection() async {
+    if (_database != null) {
+      await _database!.close();
+      _database = null;
+    }
+    _database = await initDb();
+    return _database!;
+  }
+
   // Initialize the database
   Future<Database> initDb() async {
     final documentsDirectory = await getApplicationDocumentsDirectory();
@@ -510,5 +520,60 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [formId],
     );
+  }
+
+  // Get the owner of a report (returns inspector_user_id)
+  Future<Map<String, dynamic>> getReportOwner(int reportId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'Reports',
+      columns: ['inspector_user_id'],
+      where: 'id = ?',
+      whereArgs: [reportId],
+      limit: 1,
+    );
+
+    if (results.isEmpty) {
+      throw Exception('Report not found');
+    }
+
+    return results.first;
+  }
+
+  // Update an existing report and its data
+  Future<void> updateReport(
+      int reportId, int inspectorId, Map<int, dynamic> formData) async {
+    final db = await database;
+
+    await db.transaction((txn) async {
+      // Update the report timestamp
+      await txn.update(
+        'Reports',
+        {
+          'updated_at': DateTime.now().toIso8601String(),
+        },
+        where: 'id = ? AND inspector_user_id = ?',
+        whereArgs: [reportId, inspectorId],
+      );
+
+      // Delete existing report data
+      await txn.delete(
+        'ReportData',
+        where: 'report_id = ?',
+        whereArgs: [reportId],
+      );
+
+      // Insert updated report data
+      for (final entry in formData.entries) {
+        final fieldId = entry.key;
+        final value = entry.value;
+
+        await txn.insert('ReportData', {
+          'report_id': reportId,
+          'form_field_id': fieldId,
+          'value': value.toString(),
+        });
+      }
+    });
   }
 }
