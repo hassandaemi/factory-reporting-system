@@ -52,6 +52,9 @@ void main() async {
   final dbHelper = DatabaseHelper();
   await dbHelper.initDb();
   await dbHelper.refreshDatabaseConnection();
+  
+  // Ensure default admin user exists
+  await dbHelper.ensureDefaultAdminExists();
 
   runApp(
     ChangeNotifierProvider(

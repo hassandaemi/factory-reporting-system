@@ -5,6 +5,7 @@ import 'inspector_management_screen.dart';
 import 'form_management_screen.dart';
 import 'form_assignment_screen.dart';
 import 'admin_reports_screen.dart';
+import 'change_credentials_screen.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -179,6 +180,20 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const AdminReportsScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.security),
+              title: const Text('Change Admin Credentials'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ChangeCredentialsScreen(),
                   ),
                 );
               },

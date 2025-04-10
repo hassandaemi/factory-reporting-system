@@ -151,13 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     : const Text('Login'),
               ),
               const SizedBox(height: 16),
-              TextButton(
-                onPressed: () {
-                  // Add admin user for first login
-                  _showCreateAdminDialog();
-                },
-                child: const Text('Create Admin User (First Time Setup)'),
-              ),
+              // Default admin user is now created automatically on app startup
             ],
           ),
         ),
@@ -165,64 +159,5 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _showCreateAdminDialog() {
-    final usernameController = TextEditingController(text: 'admin');
-    final passwordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Create Admin User'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-              ),
-            ),
-            TextField(
-              controller: passwordController,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-              ),
-              obscureText: true,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (usernameController.text.isNotEmpty &&
-                  passwordController.text.isNotEmpty) {
-                final user = User(
-                  username: usernameController.text,
-                  password: passwordController.text,
-                  role: UserRole.admin,
-                );
-
-                final appState = Provider.of<AppState>(context, listen: false);
-                await appState.databaseHelper.insertUser(user.toMap());
-
-                if (!mounted) return;
-                Navigator.of(ctx).pop();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Admin user created successfully'),
-                  ),
-                );
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
-  }
+  // Admin user is now created automatically on app startup
 }

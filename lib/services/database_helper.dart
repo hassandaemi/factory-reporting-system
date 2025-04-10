@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:factory_reporting_system/models/user.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -510,6 +511,57 @@ class DatabaseHelper {
       where: 'id = ?',
       whereArgs: [userId],
     );
+  }
+
+  // Update user credentials (username and/or password)
+  Future<int> updateUserCredentials(
+      int userId, String? newUsername, String? newPassword) async {
+    final db = await database;
+
+    final Map<String, dynamic> updateValues = {};
+
+    // Update username if provided
+    if (newUsername != null && newUsername.isNotEmpty) {
+      updateValues['username'] = newUsername;
+    }
+
+    // Update password if provided
+    if (newPassword != null && newPassword.isNotEmpty) {
+      // Hash the password using the same method as in the User model
+      final bytes = utf8.encode(newPassword);
+      final digest = sha256.convert(bytes);
+      updateValues['password_hash'] = digest.toString();
+    }
+
+    // Only proceed if there are values to update
+    if (updateValues.isEmpty) {
+      return 0;
+    }
+
+    return await db.update(
+      'Users',
+      updateValues,
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  // Create default admin user if it doesn't exist
+  Future<void> ensureDefaultAdminExists() async {
+    // Check if admin user already exists
+    final adminUser = await getUserByUsername('admin');
+
+    // If admin doesn't exist, create it
+    if (adminUser == null) {
+      // Create default admin user with username 'admin' and password 'admin123'
+      final user = User(
+        username: 'admin',
+        password: 'admin123',
+        role: UserRole.admin,
+      );
+
+      await insertUser(user.toMap());
+    }
   }
 
   // Delete a form by ID
