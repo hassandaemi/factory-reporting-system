@@ -18,6 +18,7 @@ dependencies:
   excel: ^2.0.0+1
   file_selector: ^1.0.0
   flutter_launcher_icons: ^0.14.3
+  window_manager: ^0.3.9
 
 flutter_launcher_icons:
   # android: "launcher_icon"

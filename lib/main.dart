@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:window_manager/window_manager.dart';
 import 'services/database_helper.dart';
 import 'screens/login_screen.dart';
 import 'models/user.dart';
@@ -39,6 +40,19 @@ class AppState extends ChangeNotifier {
 void main() async {
   // Ensure Flutter binding is initialized
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize window manager
+  await windowManager.ensureInitialized();
+
+  WindowOptions windowOptions = const WindowOptions(
+    minimumSize: Size(800, 600), // Set minimum size
+    center: true, // Center the window
+  );
+
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
 
   // Initialize FFI for desktop platforms
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
