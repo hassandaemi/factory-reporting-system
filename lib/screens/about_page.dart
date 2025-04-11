@@ -22,13 +22,13 @@ class AboutPage extends StatelessWidget {
               ),
               SizedBox(height: 20),
               Text(
-                'Designed & Developed by: [Designer/Team Name]',
+                'Designed by: Saman Momeni , Quality Control Department',
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 10),
               Text(
-                'Contact: [Email or Website]',
+                'Contact: f_momeni@tahvieh.com',
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
