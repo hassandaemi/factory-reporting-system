@@ -4,6 +4,7 @@ import '../../main.dart';
 import '../../models/user.dart';
 import 'inspector_forms_screen.dart';
 import 'inspector_reports_screen.dart';
+import '../about_page.dart';
 
 class InspectorHomeScreen extends StatefulWidget {
   const InspectorHomeScreen({super.key});
@@ -288,6 +289,21 @@ class _InspectorHomeScreenState extends State<InspectorHomeScreen> {
                   () {
                     Navigator.pop(context);
                     // TODO: Navigate to profile screen
+                  },
+                ),
+                const Divider(),
+                _buildDrawerItem(
+                  context,
+                  Icons.info_outline,
+                  'About App',
+                  () {
+                    Navigator.pop(context); // Close the drawer
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AboutPage(),
+                      ),
+                    );
                   },
                 ),
               ],

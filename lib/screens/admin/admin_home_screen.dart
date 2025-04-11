@@ -6,6 +6,7 @@ import 'form_management_screen.dart';
 import 'form_assignment_screen.dart';
 import 'admin_reports_screen.dart';
 import 'change_credentials_screen.dart';
+import '../about_page.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -194,6 +195,19 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const ChangeCredentialsScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.info_outline),
+              title: const Text('About App'),
+              onTap: () {
+                Navigator.pop(context); // Close the drawer
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AboutPage(),
                   ),
                 );
               },
