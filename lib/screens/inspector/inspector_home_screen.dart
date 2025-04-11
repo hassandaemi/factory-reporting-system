@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../main.dart';
 import '../../models/user.dart';
+import '../../services/database_helper.dart';
 import 'inspector_forms_screen.dart';
 import 'inspector_reports_screen.dart';
 import '../about_page.dart';
@@ -15,11 +16,42 @@ class InspectorHomeScreen extends StatefulWidget {
 
 class _InspectorHomeScreenState extends State<InspectorHomeScreen> {
   late User user;
+  late DatabaseHelper _databaseHelper;
+  Map<String, int> _statistics = {'assignedForms': 0, 'submittedReports': 0};
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     user = Provider.of<AppState>(context, listen: false).currentUser!;
+    _databaseHelper =
+        Provider.of<AppState>(context, listen: false).databaseHelper;
+    _loadStatistics();
+  }
+
+  Future<void> _loadStatistics() async {
+    if (user.id == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final stats = await _databaseHelper.getInspectorStatistics(user.id!);
+      setState(() {
+        _statistics = stats;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading statistics: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   @override
@@ -35,6 +67,11 @@ class _InspectorHomeScreenState extends State<InspectorHomeScreen> {
         elevation: 0,
         actions: [
           IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _loadStatistics,
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
             onPressed: () {
@@ -43,24 +80,160 @@ class _InspectorHomeScreenState extends State<InspectorHomeScreen> {
           ),
         ],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: EdgeInsets.all(padding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildWelcomeSection(context, user, theme),
-                  SizedBox(height: padding * 2),
-                  _buildDashboardGrid(context, isSmallScreen, padding),
-                ],
-              ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : LayoutBuilder(
+              builder: (context, constraints) {
+                return RefreshIndicator(
+                  onRefresh: _loadStatistics,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: EdgeInsets.all(padding),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildWelcomeSection(context, user, theme),
+                          SizedBox(height: padding),
+                          _buildStatisticsSection(
+                              context, theme, isSmallScreen),
+                          SizedBox(height: padding * 2),
+                          _buildDashboardGrid(context, isSmallScreen, padding),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
-      ),
       drawer: _buildDrawer(context, theme),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => InspectorFormsScreen(user: user),
+            ),
+          ).then((_) => _loadStatistics());
+        },
+        tooltip: 'Fill Form',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildStatisticsSection(
+      BuildContext context, ThemeData theme, bool isSmallScreen) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(15),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Your Activity',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              _buildStatisticItem(
+                context,
+                'Assigned Forms',
+                _statistics['assignedForms'].toString(),
+                Icons.assignment_outlined,
+                Colors.blue,
+                theme,
+              ),
+              _buildStatisticItem(
+                context,
+                'Submitted Reports',
+                _statistics['submittedReports'].toString(),
+                Icons.fact_check_outlined,
+                Colors.green,
+                theme,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatisticItem(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+    Color color,
+    ThemeData theme,
+  ) {
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(10),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(30),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withAlpha(180),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -181,7 +354,7 @@ class _InspectorHomeScreenState extends State<InspectorHomeScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withAlpha(25),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
@@ -201,7 +374,7 @@ class _InspectorHomeScreenState extends State<InspectorHomeScreen> {
               Text(
                 description,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                  color: theme.colorScheme.onSurface.withAlpha(180),
                 ),
               ),
             ],

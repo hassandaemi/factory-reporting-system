@@ -628,4 +628,40 @@ class DatabaseHelper {
       }
     });
   }
+
+  // Count assigned forms for an inspector
+  Future<int> countAssignedFormsForInspector(int inspectorId) async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as count
+      FROM FormAssignments
+      WHERE inspector_user_id = ?
+    ''', [inspectorId]);
+
+    return result.isNotEmpty ? (result.first['count'] as int) : 0;
+  }
+
+  // Count submitted reports for an inspector
+  Future<int> countReportsForInspector(int inspectorId) async {
+    final db = await database;
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) as count
+      FROM Reports
+      WHERE inspector_user_id = ?
+    ''', [inspectorId]);
+
+    return result.isNotEmpty ? (result.first['count'] as int) : 0;
+  }
+
+  // Get inspector dashboard statistics
+  Future<Map<String, int>> getInspectorStatistics(int inspectorId) async {
+    final assignedFormsCount =
+        await countAssignedFormsForInspector(inspectorId);
+    final submittedReportsCount = await countReportsForInspector(inspectorId);
+
+    return {
+      'assignedForms': assignedFormsCount,
+      'submittedReports': submittedReportsCount,
+    };
+  }
 }
