@@ -22,7 +22,7 @@ class AboutPage extends StatelessWidget {
               ),
               SizedBox(height: 20),
               Text(
-                'Designed by: Saman Momeni , Quality Control Department',
+                'Designed by: Saman Momeni \n Quality Control Department',
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
