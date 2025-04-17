@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:factory_reporting_system/models/user.dart';
 import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/form.dart';
 import 'package:crypto/crypto.dart';
@@ -36,8 +36,18 @@ class DatabaseHelper {
 
   // Initialize the database
   Future<Database> initDb() async {
-    final documentsDirectory = await getApplicationDocumentsDirectory();
-    final path = join(documentsDirectory.path, 'factory_reports.db');
+    // Get the directory of the executable
+    final String executablePath = Platform.resolvedExecutable;
+    final String executableDir = dirname(executablePath);
+
+    // Construct the database path in the executable's directory
+    final path = join(executableDir, 'factory_reports.db');
+
+    // Ensure the directory exists (optional but good practice)
+    // final dbDir = Directory(dirname(path));
+    // if (!await dbDir.exists()) {
+    //   await dbDir.create(recursive: true);
+    // }
 
     return await databaseFactoryFfi.openDatabase(
       path,
